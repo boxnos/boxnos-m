@@ -1,3 +1,6 @@
+*.o
 *.fd
+*.efi
+!/src/bin.efi
 disk.img
 osbook
