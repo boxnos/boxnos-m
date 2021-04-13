@@ -6,12 +6,12 @@ run-qemu: disk.img OVMF_CODE.fd OVMF_VARS.fd
 		-drive if=pflash,format=raw,file=OVMF_VARS.fd \
 		-hda $<
 
-%.fd : /usr/share/OVMF
-	cp /usr/share/OVMF/*.fd .
+# %.fd : /usr/share/OVMF
+#	cp /usr/share/OVMF/*.fd .
 # %.fd : edk2
 #	cp edk2/Build/OvmfX64/DEBUG_GCC5/FV/*.fd .
-#%.fd : osbook
-#	cp $</devenv/$@ .
+%.fd : osbook
+	cp $</devenv/$@ .
 
 hello.efi : src/hello.c Makefile
 	clang -target x86_64-pc-win32-coff \
