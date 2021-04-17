@@ -1,3 +1,4 @@
+SHELL=/bin/bash
 target=hello.efi
 
 run-qemu: disk.img OVMF_CODE.fd OVMF_VARS.fd
@@ -27,13 +28,15 @@ disk.img: $(target) Makefile
 	mmd -i $@ EFI/BOOT
 	mcopy -i $@ $< ::EFI/BOOT/BOOTX64.EFI
 
-edk2/Build/OvmfX64/DEBUG_GCC5/FV/: edk2
+edk2/Build/OvmfX64/DEBUG_GCC5/FV/: edk2 ovmf.patch
+	cd $<; source edksetup.sh
+	patch -n edk2/Conf/target.txt < ovmf.patch
+	cd $<; build
 
 edk2:
 	git clone https://github.com/tianocore/edk2.git $@
 	cd $@; git submodule update --init
 	cd $@; make -C BaseTools
-	cd $@; source edksetup.sh
 
 osbook:
 	git clone https://github.com/uchan-nos/mikanos-build.git $@
