@@ -29,13 +29,12 @@ disk.img: $(target) Makefile
 	mcopy -i $@ $< ::EFI/BOOT/BOOTX64.EFI
 
 edk2/Build/OvmfX64/DEBUG_GCC5/FV/: edk2 ovmf.patch
-	cd $<; source edksetup.sh
-	patch -n edk2/Conf/target.txt < ovmf.patch
-	cd $<; build
+	cd $<; source edksetup.sh; \
+		cd ..; patch -n edk2/Conf/target.txt < ovmf.patch ; \
+		cd $<; build
 
 edk2:
-	git clone https://github.com/tianocore/edk2.git $@
-	cd $@; git submodule update --init
+	git clone --recursive https://github.com/tianocore/edk2.git $@
 	cd $@; make -C BaseTools
 
 osbook:
