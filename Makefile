@@ -2,6 +2,7 @@ SHELL=/bin/bash
 # target=hello.efi
 target=edk2/Build/MikanLoaderX64/DEBUG_CLANG38/X64/Loader.efi
 
+.PHONEY:
 run-qemu: OVMF_CODE.fd OVMF_VARS.fd disk.img
 	qemu-system-x86_64 \
 		-drive if=pflash,format=raw,file=OVMF_CODE.fd \
@@ -30,27 +31,26 @@ disk.img: $(target)
 	mcopy -i $@ $< ::EFI/BOOT/BOOTX64.EFI
 
 define build
-	make edk2
-	cd edk2;
-	source edksetup.sh --reconfig;
-	patch -n Conf/target.txt < ../$1;
+	cd edk2
+	source edksetup.sh --reconfig
+	patch -n Conf/target.txt < ../$1
 	build |& grep -v Build.*time:
 endef
 
 .ONESHELL:
-edk2/Build/OvmfX64: ovmf.patch
+edk2/Build/OvmfX64: ovmf.patch edk2
 	$(call build,$<)
 
 .ONESHELL:
-edk2/Build/MikanLoaderX64/DEBUG_CLANG38/X64/Loader.efi: loader.patch edk2/MikanLoaderPkg
+edk2/Build/MikanLoaderX64/DEBUG_CLANG38/X64/Loader.efi: loader.patch edk2 edk2/pkg/MikanLoaderPkg
 	$(call build,$<)
 
-edk2/MikanLoaderPkg : mikanos/MikanLoaderPkg
-	make edk2
-	cd edk2; ln -s ../mikanos/MikanLoaderPkg
+edk2/pkg/MikanLoaderPkg: loader edk2
+	cd edk2/pkg; ln -s ../../$< MikanLoaderPkg
 
 edk2: edk2_bak
 	cp -r $< $@
+	mkdir $@/pkg
 
 osbook: osbook_bak
 	cp -r $< $@
@@ -63,13 +63,13 @@ osbook_bak:
 	git clone https://github.com/uchan-nos/mikanos-build.git $@
 
 clean:
-	rm -f *.fd
 	rm -f *.o
 	rm -f disk.img
-	rm -f edk2/MikanLoaderPkg
-	rm -rf edk2/Build
+	rm -f edk2/pkg/MikanLoaderPkg
+	rm -rf edk2/Build/MikanLoaderX64
 
 clean_all: clean
+	rm -f *.fd
 	rm -rf edk2
 	rm -rf osbook
 
