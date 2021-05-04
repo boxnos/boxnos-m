@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 # target=hello.efi
-target=edk2/Build/MikanLoaderX64/DEBUG_CLANG38/X64/Loader.efi
+target=edk2/Build/loaderX64/DEBUG_CLANG38/X64/Loader.efi
 
 .PHONEY:
 run-qemu: OVMF_CODE.fd OVMF_VARS.fd disk.img
@@ -42,7 +42,7 @@ edk2/Build/OvmfX64: ovmf.patch edk2
 	$(call build,$<)
 
 .ONESHELL:
-edk2/Build/MikanLoaderX64/DEBUG_CLANG38/X64/Loader.efi: loader.patch edk2 edk2/pkg/MikanLoaderPkg
+edk2/Build/loaderX64/DEBUG_CLANG38/X64/Loader.efi: loader.patch edk2 edk2/pkg/MikanLoaderPkg
 	$(call build,$<)
 
 edk2/pkg/MikanLoaderPkg: loader edk2
@@ -66,7 +66,7 @@ clean:
 	rm -f *.o
 	rm -f disk.img
 	rm -f edk2/pkg/MikanLoaderPkg
-	rm -rf edk2/Build/MikanLoaderX64
+	rm -rf edk2/Build/loaderX64
 
 clean_all: clean
 	rm -f *.fd
