@@ -1,7 +1,7 @@
 20c20
 < ACTIVE_PLATFORM       = EmulatorPkg/EmulatorPkg.dsc
 ---
-> ACTIVE_PLATFORM       = pkg/MikanLoaderPkg/MikanLoaderPkg.dsc
+> ACTIVE_PLATFORM       = pkg/loader/MikanLoaderPkg.dsc
 44c44
 < TARGET_ARCH           = IA32
 ---

@@ -42,11 +42,11 @@ edk2/Build/OvmfX64: ovmf.patch edk2
 	$(call build,$<)
 
 .ONESHELL:
-edk2/Build/loaderX64/DEBUG_CLANG38/X64/Loader.efi: loader.patch edk2 edk2/pkg/MikanLoaderPkg
+edk2/Build/loaderX64/DEBUG_CLANG38/X64/Loader.efi: loader.patch edk2 edk2/pkg/loader
 	$(call build,$<)
 
-edk2/pkg/MikanLoaderPkg: loader edk2
-	cd edk2/pkg; ln -s ../../$< MikanLoaderPkg
+edk2/pkg/loader: loader edk2
+	cd edk2/pkg; ln -s ../../$< loader
 
 edk2: edk2_bak
 	cp -r $< $@
@@ -65,7 +65,7 @@ osbook_bak:
 clean:
 	rm -f *.o
 	rm -f disk.img
-	rm -f edk2/pkg/MikanLoaderPkg
+	rm -f edk2/pkg/loader
 	rm -rf edk2/Build/loaderX64
 
 clean_all: clean

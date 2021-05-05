@@ -27,5 +27,5 @@
 
 #@range_begin(components)
 [Components]
-  pkg/MikanLoaderPkg/Loader.inf
+  pkg/loader/Loader.inf
 #@range_end(components)
