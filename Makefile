@@ -2,7 +2,6 @@ SHELL=/bin/bash
 # target=hello.efi
 target=edk2/Build/loaderX64/DEBUG_CLANG38/X64/Loader.efi
 
-.PHONEY:
 run-qemu: OVMF_CODE.fd OVMF_VARS.fd disk.img
 	qemu-system-x86_64 \
 		-drive if=pflash,format=raw,file=OVMF_CODE.fd \
@@ -12,7 +11,7 @@ run-qemu: OVMF_CODE.fd OVMF_VARS.fd disk.img
 # %.fd: /usr/share/OVMF
 #	cp /usr/share/OVMF/*.fd .
 %.fd: edk2/Build/OvmfX64
-	cp $</DEBUG_GCC5/FV/*.fd .
+	cp $</DEBUG_CLANG38/FV/*.fd .
 #%.fd: osbook
 #	cp $</devenv/$@ .
 
@@ -33,17 +32,16 @@ disk.img: $(target)
 define build
 	cd edk2
 	source edksetup.sh --reconfig
-	patch -n Conf/target.txt < ../$1
-	build |& grep -v Build.*time:
+	build -p $1 -a X64 -t CLANG38 |& grep -v Build.*time:
 endef
 
 .ONESHELL:
-edk2/Build/OvmfX64: ovmf.patch edk2
-	$(call build,$<)
+edk2/Build/OvmfX64: edk2
+	$(call build,OvmfPkg/OvmfPkgX64.dsc)
 
 .ONESHELL:
-edk2/Build/loaderX64/DEBUG_CLANG38/X64/Loader.efi: loader.patch edk2 edk2/pkg/loader
-	$(call build,$<)
+edk2/Build/loaderX64/DEBUG_CLANG38/X64/Loader.efi: edk2 edk2/pkg/loader
+	$(call build,pkg/loader/loader.dsc)
 
 edk2/pkg/loader: loader edk2
 	cd edk2/pkg; ln -s ../../$< loader
