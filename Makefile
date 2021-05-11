@@ -39,7 +39,7 @@ $(ovmf)%.fd: edk2
 	$(call build,OvmfPkg/OvmfPkgX64.dsc)
 
 .ONESHELL:
-edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi: edk2 edk2/pkg/loader loader/loader.dsc loader/loader.inf loader/Main.c
+edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi: edk2 edk2/pkg/loader loader/loader.dsc loader/loader.inf loader/main.c
 	$(call build,pkg/loader/loader.dsc)
 
 edk2/pkg/loader: loader edk2
