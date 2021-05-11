@@ -27,5 +27,5 @@
 
 #@range_begin(components)
 [Components]
-  pkg/loader/Loader.inf
+  pkg/loader/loader.inf
 #@range_end(components)
