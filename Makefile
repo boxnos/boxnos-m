@@ -1,17 +1,16 @@
 SHELL=/bin/bash
 # target=hello.efi
+ovmf=edk2/Build/OvmfX64/DEBUG_CLANG38/FV/
 target=edk2/Build/loaderX64/DEBUG_CLANG38/X64/Loader.efi
 
-run-qemu: OVMF_CODE.fd OVMF_VARS.fd disk.img
+run-qemu: $(ovmf)/OVMF_CODE.fd $(ovmf)/OVMF_VARS.fd disk.img
 	qemu-system-x86_64 \
-		-drive if=pflash,format=raw,file=OVMF_CODE.fd \
-		-drive if=pflash,format=raw,file=OVMF_VARS.fd \
+		-drive if=pflash,format=raw,file=$(ovmf)OVMF_CODE.fd \
+		-drive if=pflash,format=raw,file=$(ovmf)OVMF_VARS.fd \
 		-hda disk.img
 
 # %.fd: /usr/share/OVMF
 #	cp /usr/share/OVMF/*.fd .
-%.fd: edk2/Build/OvmfX64
-	cp $</DEBUG_CLANG38/FV/*.fd .
 #%.fd: osbook
 #	cp $</devenv/$@ .
 
@@ -36,11 +35,11 @@ define build
 endef
 
 .ONESHELL:
-edk2/Build/OvmfX64: edk2
+$(ovmf)%.fd: edk2
 	$(call build,OvmfPkg/OvmfPkgX64.dsc)
 
 .ONESHELL:
-edk2/Build/loaderX64/DEBUG_CLANG38/X64/Loader.efi: edk2 edk2/pkg/loader
+edk2/Build/loaderX64/DEBUG_CLANG38/X64/Loader.efi: edk2 edk2/pkg/loader loader/loader.dsc loader/Loader.inf loader/Main.c
 	$(call build,pkg/loader/loader.dsc)
 
 edk2/pkg/loader: loader edk2
@@ -67,7 +66,6 @@ clean:
 	rm -rf edk2/Build/loaderX64
 
 clean_all: clean
-	rm -f *.fd
 	rm -rf edk2
 	rm -rf osbook
 
