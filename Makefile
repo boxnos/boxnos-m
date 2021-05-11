@@ -1,7 +1,7 @@
 SHELL=/bin/bash
 # target=hello.efi
 ovmf=edk2/Build/OvmfX64/DEBUG_CLANG38/FV/
-target=edk2/Build/loaderX64/DEBUG_CLANG38/X64/Loader.efi
+target=edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi
 
 run-qemu: $(ovmf)/OVMF_CODE.fd $(ovmf)/OVMF_VARS.fd disk.img
 	qemu-system-x86_64 \
@@ -39,7 +39,7 @@ $(ovmf)%.fd: edk2
 	$(call build,OvmfPkg/OvmfPkgX64.dsc)
 
 .ONESHELL:
-edk2/Build/loaderX64/DEBUG_CLANG38/X64/Loader.efi: edk2 edk2/pkg/loader loader/loader.dsc loader/loader.inf loader/Main.c
+edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi: edk2 edk2/pkg/loader loader/loader.dsc loader/loader.inf loader/Main.c
 	$(call build,pkg/loader/loader.dsc)
 
 edk2/pkg/loader: loader edk2
