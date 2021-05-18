@@ -6,13 +6,14 @@ EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_ta
     for (int i = 0; i < 3; i++)
         Print(L"BOOTING BOXNOS-M ... %d\n", i);
 
-    CHAR8 buf[4096 * 4];
+    EFI_MEMORY_DESCRIPTOR buf[400];
     UINTN buf_size = sizeof(buf), map_key, discriptor_size;
     UINT32 discriptor_version;
 
+    Print(L"Discriptor size %d\n", sizeof(EFI_MEMORY_DESCRIPTOR));
     Print(L"buf_size %d\n", buf_size);
 
-    gBS->GetMemoryMap(&buf_size, (EFI_MEMORY_DESCRIPTOR*) buf, &map_key, &discriptor_size, &discriptor_version);
+    gBS->GetMemoryMap(&buf_size, buf, &map_key, &discriptor_size, &discriptor_version);
 
     Print(L"buf_size %d\n", buf_size);
 
