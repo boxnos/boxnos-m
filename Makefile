@@ -32,6 +32,7 @@ define build
 	cd edk2
 	source edksetup.sh --reconfig
 	build -p $1 -a X64 -t CLANG38 |& grep -v Build.*time:
+	exit $${PIPESTATUS[0]}
 endef
 
 .ONESHELL:
