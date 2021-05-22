@@ -1,6 +1,8 @@
 #include  <Uefi.h>
 #include  <Library/UefiLib.h>
 #include  <Library/UefiBootServicesTableLib.h>
+#include  <Protocol/LoadedImage.h>
+
 const CHAR16 * get_memory_type (EFI_MEMORY_TYPE t) {
     // julia> foreach(s -> println("case ", s, ": return L\"", s, "\";"), map(strip,split(match(r"typedef.*{(.*)}.*EFI_MEMORY_TYPE"sm, replace(read("edk2/MdePkg/Include/Uefi/UefiMultiPhase.h", String), r"//.*\n" => ""))[1], ",\r\n")))
     switch (t) {
@@ -24,10 +26,18 @@ const CHAR16 * get_memory_type (EFI_MEMORY_TYPE t) {
     }
 }
 
+void open_root_dir(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root) {
+    EFI_LOADED_IMAGE_PROTOCOL *loaded_image;
+    gBS->OpenProtocol(image_handle, &gEfiLoadedImageProtocolGuid, (void **) &loaded_image,
+                      image_handle, NULL, EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+    Print(L"loaded_image->FilePath: %s\n", loaded_image->FilePath);
+}
+
 EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     for (int i = 0; i < 3; i++)
         Print(L"BOOTING BOXNOS-M ... %d\n", i);
 
+    /*
     CHAR8 buf[1024 * 4 * 4];
     UINTN buf_size = sizeof(buf), map_key, discriptor_size;
     UINT32 discriptor_version;
@@ -40,9 +50,12 @@ EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_ta
     buf_size /= discriptor_size;
     for (UINTN i = 0; i < buf_size; i++) {
         EFI_MEMORY_DESCRIPTOR *o = (EFI_MEMORY_DESCRIPTOR *) (buf + i * discriptor_size);
-        Print(L"Type:%s PhysicalStart:%x VirtualStart:%x NumberOfPages:%d Attribute:%d\n", get_memory_type(o->Type), o->PhysicalStart, o->VirtualStart, o->NumberOfPages, o->Attribute);
+        Print(L"Type:%s PH:%x VS:%x NOP:%d A:%d\n", get_memory_type(o->Type), o->PhysicalStart, o->VirtualStart, o->NumberOfPages, o->Attribute);
     }
+    */
 
+    EFI_FILE_PROTOCOL *root;
+    open_root_dir(image_handle, &root);
 
     Print(L"DONE.");
     for (;;)
