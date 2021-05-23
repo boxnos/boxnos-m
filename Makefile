@@ -5,6 +5,7 @@ target=edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi
 
 run-qemu: $(ovmf)/OVMF_CODE.fd $(ovmf)/OVMF_VARS.fd disk.img
 	qemu-system-x86_64 \
+		-monitor stdio \
 		-drive if=pflash,format=raw,file=$(ovmf)OVMF_CODE.fd \
 		-drive if=pflash,format=raw,file=$(ovmf)OVMF_VARS.fd \
 		-hda disk.img
