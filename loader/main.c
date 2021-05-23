@@ -1,7 +1,8 @@
-#include  <Uefi.h>
-#include  <Library/UefiLib.h>
-#include  <Library/UefiBootServicesTableLib.h>
-#include  <Protocol/LoadedImage.h>
+#include <Uefi.h>
+#include <Library/UefiLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/PrintLib.h>
+#include <Protocol/LoadedImage.h>
 
 const CHAR16 * get_memory_type (EFI_MEMORY_TYPE t) {
     // julia> foreach(s -> println("case ", s, ": return L\"", s, "\";"), map(strip,split(match(r"typedef.*{(.*)}.*EFI_MEMORY_TYPE"sm, replace(read("edk2/MdePkg/Include/Uefi/UefiMultiPhase.h", String), r"//.*\n" => ""))[1], ",\r\n")))
@@ -38,32 +39,40 @@ EFI_FILE_PROTOCOL * open_root_dir(EFI_HANDLE image_handle) {
     return root;
 }
 
-EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
-    for (int i = 0; i < 3; i++)
-        Print(L"BOOTING BOXNOS-M ... %d\n", i);
+void save_memory_map(EFI_FILE_PROTOCOL *root) {
+    EFI_FILE_PROTOCOL *file;
+    root->Open(root, &file, L"\\memmap", EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
 
-    /*
-    CHAR8 buf[1024 * 4 * 4];
-    UINTN buf_size = sizeof(buf), map_key, discriptor_size;
+    CHAR8 mbuf[1024 * 4 * 4];
+    UINTN mbuf_size = sizeof(mbuf), map_key, discriptor_size;
     UINT32 discriptor_version;
+    gBS->GetMemoryMap(&mbuf_size, (EFI_MEMORY_DESCRIPTOR *) mbuf, &map_key, &discriptor_size, &discriptor_version);
 
-    gBS->GetMemoryMap(&buf_size, (EFI_MEMORY_DESCRIPTOR *) buf, &map_key, &discriptor_size, &discriptor_version);
-    Print(L"buf_size %d\n", buf_size);
-    Print(L"Discriptor size %d\n", sizeof(EFI_MEMORY_DESCRIPTOR));
-    Print(L"discriptor_size %d\n", discriptor_size);
+    CHAR8 buf[256];
+    CHAR8 *header = "index, type, type(name), physical_start, virtual_start, attribute\n";
+    UINTN len = AsciiStrLen(header);
+    file->Write(file, &len, header);
 
-    buf_size /= discriptor_size;
-    for (UINTN i = 0; i < buf_size; i++) {
-        EFI_MEMORY_DESCRIPTOR *o = (EFI_MEMORY_DESCRIPTOR *) (buf + i * discriptor_size);
-        Print(L"Type:%s PH:%x VS:%x NOP:%d A:%d\n", get_memory_type(o->Type), o->PhysicalStart, o->VirtualStart, o->NumberOfPages, o->Attribute);
+    mbuf_size /= discriptor_size;
+    for (UINTN i = 0; i < mbuf_size; i++) {
+        EFI_MEMORY_DESCRIPTOR *o = (EFI_MEMORY_DESCRIPTOR *) (mbuf + i * discriptor_size);
+        len = AsciiSPrint(buf, sizeof(buf),
+                          "%u, %x, %-ls, %08lx, %lx, %lx\n",
+                          i, o->Type, get_memory_type(o->Type),
+                          o->PhysicalStart, o->VirtualStart, o->NumberOfPages, o->Attribute & 0xffffflu);
+        file->Write(file, &len, buf);
     }
-    */
+    file->Close(file);
+}
 
-    EFI_FILE_PROTOCOL *root = open_root_dir(image_handle);
-    EFI_FILE_PROTOCOL *memmap_file;
-    root->Open(root, &memmap_file, L"\\memmap", EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
+EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
+    Print(L"BOOTING BOXNOS-M\n");
 
-    Print(L"DONE.");
+    Print(L"Saving memory map...\n");
+    save_memory_map(open_root_dir(image_handle));
+    Print(L"Saving memory map... DONE.\n");
+
+    Print(L"All DONE.");
     for (;;)
         ;
     return EFI_SUCCESS;
