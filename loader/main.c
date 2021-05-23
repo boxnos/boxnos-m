@@ -26,11 +26,16 @@ const CHAR16 * get_memory_type (EFI_MEMORY_TYPE t) {
     }
 }
 
-void open_root_dir(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root) {
+EFI_FILE_PROTOCOL * open_root_dir(EFI_HANDLE image_handle) {
+    EFI_FILE_PROTOCOL *root;
     EFI_LOADED_IMAGE_PROTOCOL *loaded_image;
-    gBS->OpenProtocol(image_handle, &gEfiLoadedImageProtocolGuid, (void **) &loaded_image,
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs;
+    gBS->OpenProtocol(image_handle, &gEfiLoadedImageProtocolGuid, (VOID **) &loaded_image,
                       image_handle, NULL, EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
-    Print(L"loaded_image->FilePath: %s\n", loaded_image->FilePath);
+    gBS->OpenProtocol(loaded_image->DeviceHandle, &gEfiSimpleFileSystemProtocolGuid, (VOID **) &fs,
+                      image_handle, NULL, EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+    fs->OpenVolume(fs, &root);
+    return root;
 }
 
 EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
@@ -54,8 +59,9 @@ EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_ta
     }
     */
 
-    EFI_FILE_PROTOCOL *root;
-    open_root_dir(image_handle, &root);
+    EFI_FILE_PROTOCOL *root = open_root_dir(image_handle);
+    EFI_FILE_PROTOCOL *memmap_file;
+    root->Open(root, &memmap_file, L"\\memmap", EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
 
     Print(L"DONE.");
     for (;;)
