@@ -1,7 +1,8 @@
 SHELL=/bin/bash
 # target=hello.efi
 ovmf=edk2/Build/OvmfX64/DEBUG_CLANG38/FV/
-target=edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi
+loader=edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi
+kernel=kernel/kernel.elf
 
 run-qemu: $(ovmf)/OVMF_CODE.fd $(ovmf)/OVMF_VARS.fd disk.img
 	qemu-system-x86_64 \
@@ -22,12 +23,16 @@ hello.efi: src/hello.c
 		-c $<
 	lld-link /subsystem:efi_application /entry:EfiMain /out:$@ hello.o
 
-disk.img: $(target)
+disk.img: $(loader) $(kernel)
 	qemu-img create -f raw $@ 200M
 	mkfs.fat -n 'BOXNOS-M' -s 2 -f 2 -R 32 -F 32 $@
 	mmd -i $@ EFI
 	mmd -i $@ EFI/BOOT
 	mcopy -i $@ $< ::EFI/BOOT/BOOTX64.EFI
+	mcopy -i $@ $(kernel) ::
+
+kernel/kernel.elf:
+	make -C kernel
 
 define build
 	cd edk2
@@ -66,6 +71,7 @@ clean:
 	rm -f disk.img
 	rm -f edk2/pkg/loader
 	rm -rf edk2/Build/loaderX64
+	make -C kernel clean
 
 clean_all: clean
 	rm -rf edk2

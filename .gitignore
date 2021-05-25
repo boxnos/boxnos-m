@@ -1,6 +1,7 @@
 *.o
 *.fd
 *.efi
+*.elf
 *_bak
 !/src/bin.efi
 disk.img
