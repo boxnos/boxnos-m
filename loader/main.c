@@ -3,6 +3,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/PrintLib.h>
 #include <Protocol/LoadedImage.h>
+#include <Guid/FileInfo.h>
 
 const CHAR16 * get_memory_type (EFI_MEMORY_TYPE t) {
     // julia> foreach(s -> println("case ", s, ": return L\"", s, "\";"), map(strip,split(match(r"typedef.*{(.*)}.*EFI_MEMORY_TYPE"sm, replace(read("edk2/MdePkg/Include/Uefi/UefiMultiPhase.h", String), r"//.*\n" => ""))[1], ",\r\n")))
@@ -65,12 +66,34 @@ void save_memory_map(EFI_FILE_PROTOCOL *root) {
     file->Close(file);
 }
 
+void load_kernel(EFI_FILE_PROTOCOL *root) {
+    EFI_FILE_PROTOCOL *file;
+    root->Open(root, &file, L"\\kernel.elf", EFI_FILE_MODE_READ, 0);
+
+    UINTN info_size = sizeof(EFI_FILE_INFO) + sizeof(CHAR16) * 12;
+    UINT8 buf[info_size];
+    file->GetInfo(file, &gEfiFileInfoGuid, &info_size, buf);
+    EFI_FILE_INFO *info = (EFI_FILE_INFO *) buf;
+    UINTN size = info->FileSize;
+
+    EFI_PHYSICAL_ADDRESS addr = 0x100000;
+    gBS->AllocatePages(AllocateAddress, EfiLoaderData,
+                       (size + 0xfff) / 0x1000, &addr);
+    file->Read(file, &size, (VOID *) addr);
+    Print(L"ADDR: 0x%0lx (%lu bytes)", addr, size);
+}
+
 EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     Print(L"BOOTING BOXNOS-M\n");
 
-    Print(L"Saving memory map...\n");
-    save_memory_map(open_root_dir(image_handle));
-    Print(L"Saving memory map... DONE.\n");
+    EFI_FILE_PROTOCOL *root = open_root_dir(image_handle);
+    Print(L"Saving memory map... ");
+    save_memory_map(root);
+    Print(L"[DONE]\n");
+
+    Print(L"Loading kernel... ");
+    load_kernel(root);
+    Print(L"[DONE]\n");
 
     Print(L"All DONE.");
     for (;;)
