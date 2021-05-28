@@ -40,6 +40,18 @@ EFI_FILE_PROTOCOL * open_root_dir(EFI_HANDLE image_handle) {
     return root;
 }
 
+UINTN get_map_key(EFI_FILE_PROTOCOL *root) {
+    EFI_FILE_PROTOCOL *file;
+    root->Open(root, &file, L"\\memmap", EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
+
+    CHAR8 mbuf[1024 * 4 * 4];
+    UINTN mbuf_size = sizeof(mbuf), map_key, discriptor_size;
+    UINT32 discriptor_version;
+    gBS->GetMemoryMap(&mbuf_size, (EFI_MEMORY_DESCRIPTOR *) mbuf, &map_key, &discriptor_size, &discriptor_version);
+
+    return map_key;
+}
+
 void save_memory_map(EFI_FILE_PROTOCOL *root) {
     EFI_FILE_PROTOCOL *file;
     root->Open(root, &file, L"\\memmap", EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
@@ -95,8 +107,15 @@ EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_ta
     load_kernel(root);
     Print(L"[DONE]\n");
 
-    Print(L"All DONE.");
-    for (;;)
-        ;
-    return EFI_SUCCESS;
+    Print(L"All DONE.\n");
+
+    Print(L"Exiting boot...\n");
+    if (EFI_ERROR(gBS->ExitBootServices(image_handle, get_map_key(root)))) {
+        Print(L"[FAIL]\n");
+        for (;;)
+            ;
+    }
+    ((void(*)(void))*(UINT64 *)(0x100000 + 24))();
+
+    return 0;
 }
