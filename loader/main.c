@@ -93,7 +93,27 @@ void load_kernel(EFI_FILE_PROTOCOL *root) {
     Print(L"ADDR: 0x%0lx (%lu bytes)", addr, size);
 }
 
+void open_gop(EFI_HANDLE ih, EFI_GRAPHICS_OUTPUT_PROTOCOL **gop) {
+    UINTN n = 0;
+    EFI_HANDLE *h = NULL;
+    gBS->LocateHandleBuffer(ByProtocol, &gEfiGraphicsOutputProtocolGuid, NULL, &n, &h);
+    gBS->OpenProtocol(h[0], &gEfiGraphicsOutputProtocolGuid, (VOID**)gop,
+                      ih, NULL, EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+    gBS->FreePool(h);
+}
+
 EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
+    Print(L"Reset Display...\n");
+    gST->ConOut->ClearScreen(gST->ConOut);
+
+    Print(L"Open graphics ... ");
+    EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
+    open_gop(image_handle, &gop);
+    Print(L"[DONE]\n");
+
+    for (UINTN i = 0; i < gop->Mode->FrameBufferSize; i++)
+        ((UINT8 *)gop->Mode->FrameBufferBase)[i] = i / 16;
+
     Print(L"BOOTING BOXNOS-M\n");
 
     Print(L"Getting memory map... ");
