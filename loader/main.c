@@ -40,35 +40,33 @@ EFI_FILE_PROTOCOL * open_root_dir(EFI_HANDLE image_handle) {
     return root;
 }
 
-UINTN get_map_key(EFI_FILE_PROTOCOL *root) {
-    EFI_FILE_PROTOCOL *file;
-    root->Open(root, &file, L"\\memmap", EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
-
-    CHAR8 mbuf[1024 * 4 * 4];
-    UINTN mbuf_size = sizeof(mbuf), map_key, discriptor_size;
+struct memory_map {
+    UINTN buffer_size;
+    VOID* buffer;
+    UINTN map_size;
+    UINTN map_key;
+    UINTN discriptor_size;
     UINT32 discriptor_version;
-    gBS->GetMemoryMap(&mbuf_size, (EFI_MEMORY_DESCRIPTOR *) mbuf, &map_key, &discriptor_size, &discriptor_version);
+};
 
-    return map_key;
+void get_memory_map(struct memory_map *m) {
+    gBS->GetMemoryMap(&m->buffer_size, (EFI_MEMORY_DESCRIPTOR *) &m->buffer, &m->map_key, &m->discriptor_size, &m->discriptor_version);
 }
 
-void save_memory_map(EFI_FILE_PROTOCOL *root) {
+void save_memory_map(struct memory_map *m, EFI_FILE_PROTOCOL *root) {
     EFI_FILE_PROTOCOL *file;
     root->Open(root, &file, L"\\memmap", EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
 
-    CHAR8 mbuf[1024 * 4 * 4];
-    UINTN mbuf_size = sizeof(mbuf), map_key, discriptor_size;
-    UINT32 discriptor_version;
-    gBS->GetMemoryMap(&mbuf_size, (EFI_MEMORY_DESCRIPTOR *) mbuf, &map_key, &discriptor_size, &discriptor_version);
+    get_memory_map(m);
 
     CHAR8 buf[256];
     CHAR8 *header = "index, type, type(name), physical_start, virtual_start, attribute\n";
     UINTN len = AsciiStrLen(header);
     file->Write(file, &len, header);
 
-    mbuf_size /= discriptor_size;
-    for (UINTN i = 0; i < mbuf_size; i++) {
-        EFI_MEMORY_DESCRIPTOR *o = (EFI_MEMORY_DESCRIPTOR *) (mbuf + i * discriptor_size);
+    m->buffer_size /= m->discriptor_size;
+    for (UINTN i = 0; i < m->buffer_size; i++) {
+        EFI_MEMORY_DESCRIPTOR *o = (EFI_MEMORY_DESCRIPTOR *) (m->buffer + i * m->discriptor_size);
         len = AsciiSPrint(buf, sizeof(buf),
                           "%u, %x, %-ls, %08lx, %lx, %lx\n",
                           i, o->Type, get_memory_type(o->Type),
@@ -98,23 +96,33 @@ void load_kernel(EFI_FILE_PROTOCOL *root) {
 EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     Print(L"BOOTING BOXNOS-M\n");
 
+    Print(L"Getting memory map... ");
+    CHAR8 mm_buf[1024 * 4 * 4];
+    struct memory_map mm = {sizeof(mm_buf), mm_buf, 0, 0, 0, 0};
+    get_memory_map(&mm);
+    Print(L"[DONE]\n");
+
+    Print(L"Opening root... ");
     EFI_FILE_PROTOCOL *root = open_root_dir(image_handle);
+    Print(L"[DONE]\n");
+
     Print(L"Saving memory map... ");
-    save_memory_map(root);
+    save_memory_map(&mm, root);
     Print(L"[DONE]\n");
 
     Print(L"Loading kernel... ");
     load_kernel(root);
     Print(L"[DONE]\n");
 
-    Print(L"All DONE.\n");
+    Print(L"[All DONE]\n");
 
-    Print(L"Exiting boot...\n");
-    if (EFI_ERROR(gBS->ExitBootServices(image_handle, get_map_key(root)))) {
+    Print(L"Exiting boot... \n");
+    if (EFI_ERROR(gBS->ExitBootServices(image_handle, (get_memory_map(&mm), mm.map_key)))) {
         Print(L"[FAIL]\n");
         for (;;)
             ;
     }
+
     ((void(*)(void))*(UINT64 *)(0x100000 + 24))();
 
     return 0;
