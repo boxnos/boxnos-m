@@ -3,8 +3,11 @@ SHELL=/bin/bash
 ovmf=edk2/Build/OvmfX64/DEBUG_CLANG38/FV/
 loader=edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi
 kernel=kernel/kernel.elf
+lib=x86_64-elf
+export CPPFLAGS=-I$(PWD)/$(lib)/include/c++/v1 -I$(PWD)/$(lib)/include -I$(PWD)/$(lib)/freetype -nostdlibinc -D__ELF__ -D_LDBL_EQ_DBL
+export LDFLAGS=-L$(PWD)/$(lib)/lib -lc++ -lm
 
-run-qemu: $(ovmf)/OVMF_CODE.fd $(ovmf)/OVMF_VARS.fd disk.img
+run-qemu: $(ovmf)/OVMF_CODE.fd $(ovmf)/OVMF_VARS.fd subs disk.img
 	qemu-system-x86_64 \
 		-monitor stdio \
 		-drive if=pflash,format=raw,file=$(ovmf)OVMF_CODE.fd \
@@ -28,11 +31,11 @@ disk.img: $(loader) $(kernel)
 	mkfs.fat -n 'BOXNOS-M' -s 2 -f 2 -R 32 -F 32 $@
 	mmd -i $@ EFI
 	mmd -i $@ EFI/BOOT
-	mcopy -i $@ $< ::EFI/BOOT/BOOTX64.EFI
+	mcopy -i $@ $(loader) ::EFI/BOOT/BOOTX64.EFI
 	mcopy -i $@ $(kernel) ::
 
-kernel/kernel.elf:
-	make -C kernel
+subs: $(lib)
+	make -e -C kernel
 
 define build
 	cd edk2
@@ -59,12 +62,20 @@ edk2: edk2_bak
 osbook: osbook_bak
 	cp -r $< $@
 
+$(lib): lib_bak
+	tar -zxvf lib_bak/x86_64-elf.tar.gz
+	touch $(lib)
+
 edk2_bak:
 	git clone --recursive https://github.com/tianocore/edk2.git -b edk2-stable202102 $@
 	cd $@; make -C BaseTools
 
 osbook_bak:
 	git clone https://github.com/uchan-nos/mikanos-build.git $@
+
+lib_bak:
+	mkdir $@
+	cd $@; wget -q https://github.com/uchan-nos/mikanos-build/releases/download/v2.0/x86_64-elf.tar.gz
 
 clean:
 	rm -f *.o
@@ -73,9 +84,10 @@ clean:
 	rm -rf edk2/Build/loaderX64
 	make -C kernel clean
 
-clean_all: clean
+clean-all: clean
 	rm -rf edk2
 	rm -rf osbook
+	rm -rf $(lib)
 
 destroy: clean_all
 	rm -rf *_bak

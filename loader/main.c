@@ -143,7 +143,8 @@ EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_ta
             ;
     }
 
-    ((void(*)(void))*(UINT64 *)(0x100000 + 24))();
+    ((void(*)(UINT64, UINT64))*(UINT64 *)(0x100000 + 24))(gop->Mode->FrameBufferBase,
+                                                          gop->Mode->FrameBufferSize);
 
     return 0;
 }
