@@ -2,8 +2,11 @@
 *.fd
 *.efi
 *.elf
-*_bak
 !/src/bin.efi
 disk.img
 osbook
 edk2
+x86_64-elf
+bak/osbook
+bak/edk2
+bak/lib

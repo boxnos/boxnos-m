@@ -55,26 +55,30 @@ edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi: edk2 edk2/pkg/loader loader/l
 edk2/pkg/loader: loader edk2
 	cd edk2/pkg; ln -s ../../$< loader
 
-edk2: edk2_bak
+edk2: bak/edk2
 	cp -r $< $@
 	mkdir $@/pkg
 
-osbook: osbook_bak
+osbook: bak/osbook
 	cp -r $< $@
 
-$(lib): lib_bak
-	tar -zxvf lib_bak/x86_64-elf.tar.gz
+$(lib): bak/lib
+	tar -zxvf $</x86_64-elf.tar.gz
 	touch $(lib)
 
-edk2_bak:
+bak/edk2:
+	mdkir -p bak
 	git clone --recursive https://github.com/tianocore/edk2.git -b edk2-stable202102 $@
+	patch -u bak/edk2/BaseTools/Source/C/BrotliCompress/brotli/c/dec/decode.c < bak/decode.c.patch
+	patch -u bak/edk2/BaseTools/Source/C/BrotliCompress/brotli/c/enc/encode.c < bak/encode.c.patch
 	cd $@; make -C BaseTools
 
-osbook_bak:
+bak/osbook:
+	mkdir -p bak
 	git clone https://github.com/uchan-nos/mikanos-build.git $@
 
-lib_bak:
-	mkdir $@
+bak/lib:
+	mkdir -p $@
 	cd $@; wget -q https://github.com/uchan-nos/mikanos-build/releases/download/v2.0/x86_64-elf.tar.gz
 
 clean:
@@ -89,5 +93,7 @@ clean-all: clean
 	rm -rf osbook
 	rm -rf $(lib)
 
-destroy: clean_all
-	rm -rf *_bak
+destroy: clean-all
+	rm -rf bak/edk2
+	rm -rf bak/osbook
+	rm -rf bak/lib
