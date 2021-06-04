@@ -3,7 +3,8 @@ SHELL=/bin/bash
 ovmf=edk2/Build/OvmfX64/DEBUG_CLANG38/FV
 loader=edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi
 kernel=kernel/kernel.elf
-lib=x86_64-elf
+lib=libcxx/lib
+# lib=x86_64-elf
 export CPPFLAGS=-I$(PWD)/$(lib)/include/c++/v1 -I$(PWD)/$(lib)/include -I$(PWD)/$(lib)/freetype -nostdlibinc -D__ELF__ -D_LDBL_EQ_DBL
 export LDFLAGS=-L$(PWD)/$(lib)/lib -lc++ -lm
 
@@ -60,12 +61,15 @@ edk2: bak/edk2
 	cp -r $< $@
 	mkdir $@/pkg
 
+$(lib):
+	cd libcxx; make
+# $(lib): bak/lib
+#	tar -zxvf $</x86_64-elf.tar.gz
+#	touch $(lib)
+
 osbook: bak/osbook
 	cp -r $< $@
 
-$(lib): bak/lib
-	tar -zxvf $</x86_64-elf.tar.gz
-	touch $(lib)
 
 bak/edk2:
 	git clone --recursive https://github.com/tianocore/edk2.git -b edk2-stable202102 $@

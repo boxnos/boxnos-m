@@ -10,3 +10,5 @@ x86_64-elf
 bak/osbook
 bak/edk2
 bak/lib
+libcxx/*
+!libcxx/Makefile
