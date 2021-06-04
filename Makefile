@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 # target=hello.efi
-ovmf=edk2/Build/OvmfX64/DEBUG_CLANG38/FV/
+ovmf=edk2/Build/OvmfX64/DEBUG_CLANG38/FV
 loader=edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi
 kernel=kernel/kernel.elf
 lib=x86_64-elf
@@ -10,8 +10,8 @@ export LDFLAGS=-L$(PWD)/$(lib)/lib -lc++ -lm
 run-qemu: $(ovmf)/OVMF_CODE.fd $(ovmf)/OVMF_VARS.fd subs disk.img
 	qemu-system-x86_64 \
 		-monitor stdio \
-		-drive if=pflash,format=raw,file=$(ovmf)OVMF_CODE.fd \
-		-drive if=pflash,format=raw,file=$(ovmf)OVMF_VARS.fd \
+		-drive if=pflash,format=raw,file=$(ovmf)/OVMF_CODE.fd \
+		-drive if=pflash,format=raw,file=$(ovmf)/OVMF_VARS.fd \
 		-hda disk.img
 
 # %.fd: /usr/share/OVMF
@@ -45,15 +45,16 @@ define build
 endef
 
 .ONESHELL:
-$(ovmf)%.fd: edk2
+$(ovmf)/%.fd: edk2
 	$(call build,OvmfPkg/OvmfPkgX64.dsc)
 
 .ONESHELL:
-edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi: edk2 edk2/pkg/loader loader/loader.dsc loader/loader.inf loader/main.c
+$(loader): edk2 edk2/pkg/loader loader/loader.dsc loader/loader.inf loader/main.c
 	$(call build,pkg/loader/loader.dsc)
 
-edk2/pkg/loader: loader edk2
+edk2/pkg/loader: loader
 	cd edk2/pkg; ln -s ../../$< loader
+	touch loader
 
 edk2: bak/edk2
 	cp -r $< $@
@@ -67,14 +68,12 @@ $(lib): bak/lib
 	touch $(lib)
 
 bak/edk2:
-	mdkir -p bak
 	git clone --recursive https://github.com/tianocore/edk2.git -b edk2-stable202102 $@
 	patch -u bak/edk2/BaseTools/Source/C/BrotliCompress/brotli/c/dec/decode.c < bak/decode.c.patch
 	patch -u bak/edk2/BaseTools/Source/C/BrotliCompress/brotli/c/enc/encode.c < bak/encode.c.patch
 	cd $@; make -C BaseTools
 
 bak/osbook:
-	mkdir -p bak
 	git clone https://github.com/uchan-nos/mikanos-build.git $@
 
 bak/lib:
