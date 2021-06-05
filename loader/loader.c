@@ -28,6 +28,11 @@ const CHAR16 * get_memory_type (EFI_MEMORY_TYPE t) {
     }
 }
 
+#define halt_if_error(status, ...) \
+    if (EFI_ERROR(status)) { \
+        Print(__VA_ARGS__); \
+        for (;;) __asm__("hlt");}
+
 EFI_FILE_PROTOCOL * open_root_dir(EFI_HANDLE image_handle) {
     EFI_FILE_PROTOCOL *root;
     EFI_LOADED_IMAGE_PROTOCOL *loaded_image;
@@ -78,7 +83,8 @@ void save_memory_map(struct memory_map *m, EFI_FILE_PROTOCOL *root) {
 
 void load_kernel(EFI_FILE_PROTOCOL *root) {
     EFI_FILE_PROTOCOL *file;
-    root->Open(root, &file, L"\\kernel.elf", EFI_FILE_MODE_READ, 0);
+    CHAR16 *filename = L"\\kernel.elf";
+    halt_if_error(root->Open(root, &file, filename, EFI_FILE_MODE_READ, 0), L"Can't find %s", filename);
 
     UINTN info_size = sizeof(EFI_FILE_INFO) + sizeof(CHAR16) * 12;
     UINT8 buf[info_size];
@@ -111,8 +117,8 @@ EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_ta
     open_gop(image_handle, &gop);
     Print(L"[DONE]\n");
 
-    for (UINTN i = 0; i < gop->Mode->FrameBufferSize; i++)
-        ((UINT8 *)gop->Mode->FrameBufferBase)[i] = i / 16;
+    //for (UINTN i = 0; i < gop->Mode->FrameBufferSize; i++)
+    //    ((UINT8 *)gop->Mode->FrameBufferBase)[i] = i / 16;
 
     Print(L"BOOTING BOXNOS-M\n");
 
@@ -137,11 +143,7 @@ EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_ta
     Print(L"[All DONE]\n");
 
     Print(L"Exiting boot... \n");
-    if (EFI_ERROR(gBS->ExitBootServices(image_handle, (get_memory_map(&mm), mm.map_key)))) {
-        Print(L"[FAIL]\n");
-        for (;;)
-            ;
-    }
+    halt_if_error(gBS->ExitBootServices(image_handle, (get_memory_map(&mm), mm.map_key)), L"[FAIL]\n");
 
     ((void(*)(UINT64, UINT64))*(UINT64 *)(0x100000 + 24))(gop->Mode->FrameBufferBase,
                                                           gop->Mode->FrameBufferSize);
