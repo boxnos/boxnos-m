@@ -9,7 +9,7 @@
 #  VALID_ARCHITECTURES           = X64
 
 [Sources]
-  main.c
+  loader.c
 
 [Packages]
   MdePkg/MdePkg.dec
