@@ -94,7 +94,7 @@ clean:
 clean-all: clean
 	rm -rf edk2
 	rm -rf osbook
-	rm -rf $(lib)
+	cd libcxx; make clean
 
 destroy: clean-all
 	rm -rf bak/edk2
