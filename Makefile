@@ -54,7 +54,7 @@ $(loader): edk2 edk2/pkg/loader loader/loader.dsc loader/loader.inf loader/loade
 	$(call build,pkg/loader/loader.dsc)
 
 edk2/pkg/loader: loader
-	cd edk2/pkg; ln -s ../../$< loader
+	ln -s ../../loader edk2/pkg/loader
 	touch loader
 
 edk2: bak/edk2
