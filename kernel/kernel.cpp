@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 
 #include "frame_buffer_config.hpp"
 using namespace std;
@@ -32,9 +33,10 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
     for (int x {}; x < conf.h; ++x)
         for (int y {}; y < conf.v; ++y)
             write_pixel(conf, x, y, {255, 255, 255});
-    for (int x {}; x < 100; x++)
-        for (int y {}; y < 200; y++)
-            write_pixel(conf, x + 10, y + 20, {255, 100, 100});
+    for (int t {}; t < 10; t++)
+        for (int x {}, ex = rand() % conf.h / 2, ey = rand() % conf.v / 2; x < ex; x++)
+            for (int y {}; y < ey; y++)
+                write_pixel(conf, x + ex, y + ey, {(uint8_t)(ex % 256), (uint8_t)(ey % 256), 0});
     for (;;)
         __asm__("hlt");
 }
