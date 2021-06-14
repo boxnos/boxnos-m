@@ -5,6 +5,8 @@
 #include <Protocol/LoadedImage.h>
 #include <Guid/FileInfo.h>
 
+#include "frame_buffer_config.hpp"
+
 const CHAR16 * get_memory_type (EFI_MEMORY_TYPE t) {
     // julia> foreach(s -> println("case ", s, ": return L\"", s, "\";"), map(strip,split(match(r"typedef.*{(.*)}.*EFI_MEMORY_TYPE"sm, replace(read("edk2/MdePkg/Include/Uefi/UefiMultiPhase.h", String), r"//.*\n" => ""))[1], ",\r\n")))
     switch (t) {
@@ -28,10 +30,15 @@ const CHAR16 * get_memory_type (EFI_MEMORY_TYPE t) {
     }
 }
 
+inline void halt() {
+    for (;;)
+        __asm__("hlt");
+}
+
 #define halt_if_error(status, ...) \
     if (EFI_ERROR(status)) { \
         Print(__VA_ARGS__); \
-        for (;;) __asm__("hlt");}
+        halt();}
 
 EFI_FILE_PROTOCOL * open_root_dir(EFI_HANDLE image_handle) {
     EFI_FILE_PROTOCOL *root;
@@ -108,17 +115,34 @@ void open_gop(EFI_HANDLE ih, EFI_GRAPHICS_OUTPUT_PROTOCOL **gop) {
     gBS->FreePool(h);
 }
 
+void set_frame_buffer_config(EFI_HANDLE ih, struct frame_buffer_config *conf) {
+    EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
+    open_gop(ih, &gop);
+
+    // for (UINTN i = 0; i < gop->Mode->FrameBufferSize; i++)
+    //    ((UINT8 *)gop->Mode->FrameBufferBase)[i] = i / 16;
+
+    conf->buf = (UINT8*)gop->Mode->FrameBufferBase;
+    conf->d = gop->Mode->Info->PixelsPerScanLine;
+    conf->h = gop->Mode->Info->HorizontalResolution;
+    conf->v = gop->Mode->Info->VerticalResolution;
+
+    switch (gop->Mode->Info->PixelFormat) {
+    case PixelRedGreenBlueReserved8BitPerColor:
+        conf->f = RGB;
+        break;
+    case PixelBlueGreenRedReserved8BitPerColor:
+        conf->f = BGR;
+        break;
+    default:
+        Print(L"Unsupported PixelFormat %d\n", gop->Mode->Info->PixelFormat);
+        halt();
+    }
+}
+
 EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     Print(L"Reset Display...\n");
     gST->ConOut->ClearScreen(gST->ConOut);
-
-    Print(L"Open graphics ... ");
-    EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
-    open_gop(image_handle, &gop);
-    Print(L"[DONE]\n");
-
-    //for (UINTN i = 0; i < gop->Mode->FrameBufferSize; i++)
-    //    ((UINT8 *)gop->Mode->FrameBufferBase)[i] = i / 16;
 
     Print(L"BOOTING BOXNOS-M\n");
 
@@ -140,13 +164,18 @@ EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_ta
     load_kernel(root);
     Print(L"[DONE]\n");
 
+    Print(L"Open graphics ... ");
+    struct frame_buffer_config conf;
+    set_frame_buffer_config(image_handle, &conf);
+    Print(L"[DONE]\n");
+
     Print(L"[All DONE]\n");
 
     Print(L"Exiting boot... \n");
     halt_if_error(gBS->ExitBootServices(image_handle, (get_memory_map(&mm), mm.map_key)), L"[FAIL]\n");
 
-    ((void(*)(UINT64, UINT64))*(UINT64 *)(0x100000 + 24))(gop->Mode->FrameBufferBase,
-                                                          gop->Mode->FrameBufferSize);
+
+    ((void(*)(const struct frame_buffer_config *))*(UINT64 *)(0x100000 + 24))(&conf);
 
     return 0;
 }
