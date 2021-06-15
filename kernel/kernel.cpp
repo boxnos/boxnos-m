@@ -49,11 +49,9 @@ void operator delete(void *o) {}
 
 extern "C" void kernel_main (const frame_buffer_config &conf) {
     char writer_buf[sizeof(pixel_writer)];
-    pixel_writer *writer;
-    if (conf.f == RGB)
-        writer = new(writer_buf) rgb_writer(conf);
-    else
-        writer = new(writer_buf) bgr_writer(conf);
+    pixel_writer *writer = conf.f == RGB ?
+        (pixel_writer *) new(writer_buf) rgb_writer(conf) :
+        (pixel_writer *) new(writer_buf) bgr_writer(conf);
 
     for (int x {}; x < conf.h; ++x)
         for (int y {}; y < conf.v; ++y)
