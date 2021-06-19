@@ -111,7 +111,7 @@ void copy_load_segments(Elf64_Ehdr *ehdr) {
     for (Elf64_Phdr *p = phdr, *e = p + ehdr->e_phnum; p < e; ++p)
         if (p->p_type == PT_LOAD) {
             CopyMem((VOID *)p->p_vaddr,
-                    (VOID *)(UINT64)ehdr + p->p_offset, p->p_filesz);
+                    (VOID *)((UINT64)ehdr + p->p_offset), p->p_filesz);
             SetMem((VOID *)(p->p_vaddr + p->p_filesz),
                    p->p_memsz - p->p_filesz, 0);
         }
