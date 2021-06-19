@@ -99,24 +99,22 @@ void calc_range(Elf64_Ehdr *ehdr, UINT64 *first, UINT64 *last) {
     Elf64_Phdr *phdr = (Elf64_Phdr *)((UINT64)ehdr + ehdr->e_phoff);
     *first = MAX_UINT64;
     *last = 0;
-    for (Elf64_Half i = 0; i < ehdr->e_phnum; ++i)
-        if (phdr[i].p_type == PT_LOAD) {
-            *first = MIN(*first, phdr[i].p_vaddr);
-            *last = MAX(*last, phdr[i].p_vaddr + phdr[i].p_memsz);
+    for (Elf64_Phdr *p = phdr, *e = p + ehdr->e_phnum; p < e; ++p)
+        if (p->p_type == PT_LOAD) {
+            *first = MIN(*first, p->p_vaddr);
+            *last = MAX(*last, p->p_vaddr + p->p_memsz);
         }
 }
 
 void copy_load_segments(Elf64_Ehdr *ehdr) {
     Elf64_Phdr *phdr = (Elf64_Phdr *)((UINT64)ehdr + ehdr->e_phoff);
-    for (Elf64_Half i = 0; i < ehdr->e_phnum ;++i) {
-        Elf64_Phdr *p = &phdr[i];
+    for (Elf64_Phdr *p = phdr, *e = p + ehdr->e_phnum; p < e; ++p)
         if (p->p_type == PT_LOAD) {
             CopyMem((VOID *)p->p_vaddr,
                     (VOID *)(UINT64)ehdr + p->p_offset, p->p_filesz);
             SetMem((VOID *)(p->p_vaddr + p->p_filesz),
                    p->p_memsz - p->p_filesz, 0);
         }
-    }
 }
 
 UINT64 load_kernel(EFI_FILE_PROTOCOL *root) {
