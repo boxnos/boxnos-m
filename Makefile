@@ -50,7 +50,7 @@ $(ovmf)/%.fd: edk2
 	$(call build,OvmfPkg/OvmfPkgX64.dsc)
 
 .ONESHELL:
-$(loader): edk2 edk2/pkg/loader loader/loader.dsc loader/loader.inf loader/loader.c loader/frame_buffer_config.hpp
+$(loader): edk2 edk2/pkg/loader loader/loader.dsc loader/loader.inf loader/loader.c loader/frame_buffer_config.hpp loader/elf.hpp
 	$(call build,pkg/loader/loader.dsc)
 
 edk2/pkg/loader: loader

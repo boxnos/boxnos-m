@@ -2,10 +2,12 @@
 #include <Library/UefiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/PrintLib.h>
+#include <Library/BaseMemoryLib.h>
 #include <Protocol/LoadedImage.h>
 #include <Guid/FileInfo.h>
 
 #include "frame_buffer_config.hpp"
+#include "elf.hpp"
 
 const CHAR16 * get_memory_type (EFI_MEMORY_TYPE t) {
     // julia> foreach(s -> println("case ", s, ": return L\"", s, "\";"), map(strip,split(match(r"typedef.*{(.*)}.*EFI_MEMORY_TYPE"sm, replace(read("edk2/MdePkg/Include/Uefi/UefiMultiPhase.h", String), r"//.*\n" => ""))[1], ",\r\n")))
@@ -38,6 +40,11 @@ inline void halt() {
 #define halt_if_error(status, ...) \
     if (EFI_ERROR(status)) { \
         Print(__VA_ARGS__); \
+        halt();}
+
+#define halt_if_error_with_status(status, ...) \
+    if (EFI_ERROR(status)) { \
+        Print(__VA_ARGS__, status); \
         halt();}
 
 EFI_FILE_PROTOCOL * open_root_dir(EFI_HANDLE image_handle) {
@@ -88,7 +95,31 @@ void save_memory_map(struct memory_map *m, EFI_FILE_PROTOCOL *root) {
     file->Close(file);
 }
 
-void load_kernel(EFI_FILE_PROTOCOL *root) {
+void calc_range(Elf64_Ehdr *ehdr, UINT64 *first, UINT64 *last) {
+    Elf64_Phdr *phdr = (Elf64_Phdr *)((UINT64)ehdr + ehdr->e_phoff);
+    *first = MAX_UINT64;
+    *last = 0;
+    for (Elf64_Half i = 0; i < ehdr->e_phnum; ++i)
+        if (phdr[i].p_type == PT_LOAD) {
+            *first = MIN(*first, phdr[i].p_vaddr);
+            *last = MAX(*last, phdr[i].p_vaddr + phdr[i].p_memsz);
+        }
+}
+
+void copy_load_segments(Elf64_Ehdr *ehdr) {
+    Elf64_Phdr *phdr = (Elf64_Phdr *)((UINT64)ehdr + ehdr->e_phoff);
+    for (Elf64_Half i = 0; i < ehdr->e_phnum ;++i) {
+        Elf64_Phdr *p = &phdr[i];
+        if (p->p_type == PT_LOAD) {
+            CopyMem((VOID *)p->p_vaddr,
+                    (VOID *)(UINT64)ehdr + p->p_offset, p->p_filesz);
+            SetMem((VOID *)(p->p_vaddr + p->p_filesz),
+                   p->p_memsz - p->p_filesz, 0);
+        }
+    }
+}
+
+UINT64 load_kernel(EFI_FILE_PROTOCOL *root) {
     EFI_FILE_PROTOCOL *file;
     CHAR16 *filename = L"\\kernel.elf";
     halt_if_error(root->Open(root, &file, filename, EFI_FILE_MODE_READ, 0), L"Can't find %s", filename);
@@ -99,11 +130,23 @@ void load_kernel(EFI_FILE_PROTOCOL *root) {
     EFI_FILE_INFO *info = (EFI_FILE_INFO *) buf;
     UINTN size = info->FileSize;
 
-    EFI_PHYSICAL_ADDRESS addr = 0x100000;
-    gBS->AllocatePages(AllocateAddress, EfiLoaderData,
-                       (size + 0xfff) / 0x1000, &addr);
-    file->Read(file, &size, (VOID *) addr);
-    Print(L"ADDR: 0x%0lx (%lu bytes)", addr, size);
+    VOID *kernel_buffer;
+    halt_if_error(gBS->AllocatePool(EfiLoaderData, size, &kernel_buffer), L"AllocatePool Error.\n");
+    halt_if_error(file->Read(file, &size, kernel_buffer), L"File Read Error.\n");
+
+    Elf64_Ehdr *ehdr = (Elf64_Ehdr *)kernel_buffer;
+    UINT64 kernel_first_addr, kernel_last_addr;
+    calc_range(ehdr, &kernel_first_addr, &kernel_last_addr);
+
+    halt_if_error_with_status
+        (gBS->AllocatePages(AllocateAddress, EfiLoaderData,
+                            (kernel_last_addr - kernel_first_addr + 0xfff) / 0x1000,
+                            &kernel_first_addr),
+         L"Faild to allocate Pages : %r\n");
+
+    copy_load_segments(ehdr);
+
+    return kernel_first_addr;
 }
 
 void open_gop(EFI_HANDLE ih, EFI_GRAPHICS_OUTPUT_PROTOCOL **gop) {
@@ -161,7 +204,7 @@ EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_ta
     Print(L"[DONE]\n");
 
     Print(L"Loading kernel... ");
-    load_kernel(root);
+    UINT64 kernel_addr = load_kernel(root);
     Print(L"[DONE]\n");
 
     Print(L"Open graphics ... ");
@@ -175,7 +218,7 @@ EFI_STATUS EFIAPI uefi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_ta
     halt_if_error(gBS->ExitBootServices(image_handle, (get_memory_map(&mm), mm.map_key)), L"[FAIL]\n");
 
 
-    ((void(*)(const struct frame_buffer_config *))*(UINT64 *)(0x100000 + 24))(&conf);
+    ((void(*)(const struct frame_buffer_config *))*(UINT64 *)(kernel_addr + 24))(&conf);
 
     return 0;
 }
