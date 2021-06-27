@@ -2,6 +2,7 @@
 *.fd
 *.efi
 *.elf
+tags
 !/src/bin.efi
 disk.img
 osbook
