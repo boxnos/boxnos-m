@@ -13,7 +13,7 @@ run-qemu: $(ovmf)/OVMF_CODE.fd $(ovmf)/OVMF_VARS.fd subs disk.img
 		-monitor stdio \
 		-drive if=pflash,format=raw,file=$(ovmf)/OVMF_CODE.fd \
 		-drive if=pflash,format=raw,file=$(ovmf)/OVMF_VARS.fd \
-		-hda disk.img
+		-drive if=ide,index=0,media=disk,format=raw,file=disk.img
 
 # %.fd: /usr/share/OVMF
 #	cp /usr/share/OVMF/*.fd .
