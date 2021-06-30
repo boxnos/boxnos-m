@@ -22,11 +22,7 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
             for (int y: range(ey))
                 writer->write(x + ex, y + ey, {(uint8_t)(ex % 256), (uint8_t)(ey % 256), 0});
 
-    char s[] = "Hello, boxnos-m World !?";
-    for (int i {}; s[i]; ++i) {
-        write_ascii(*writer, 201 + i * 6, 301, s[i], {0x00, 0x00, 0x00});
-        write_ascii(*writer, 200 + i * 6, 300, s[i], {0xFF, 0xFF, 0xFF});
-    }
+    write_string(*writer, 200, 300, "Hello, boxnos-m World !?", {0xFF, 0xFF, 0xFF});
 
     for (;;)
         __asm__("hlt");
