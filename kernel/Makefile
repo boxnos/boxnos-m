@@ -1,8 +1,11 @@
-CXXFLAGS+=-O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17
+flags:=-O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone
+CFLAGS+=$(flags)
+CXXFLAGS+=$(flags) -fno-exceptions -fno-rtti -std=c++17
 
-srcs:=kernel.cpp graphics.cpp font.cpp
-objs:=$(srcs:%.cpp=%.o)
-deps:=$(srcs:%.cpp=%.d)
+srcc:=newlib.c
+srcpp:=kernel.cpp graphics.cpp font.cpp
+objs:=$(srcc:%.c=%.o) $(srcpp:%.cpp=%.o)
+deps:=$(srcc:%.c=%.d) $(srcpp:%.cpp=%.d)
 
 kernel.elf: $(objs) font/mplus.o
 	ld.lld $(LDFLAGS) --entry kernel_main -z norelro --image-base 0x100000 --static \
@@ -13,6 +16,9 @@ kernel.elf: $(objs) font/mplus.o
 
 %.o: %.cpp
 	clang++ -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+%.o: %.c
+	clang -MMD -MP $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f *.o *.elf tags *.d
