@@ -27,6 +27,30 @@ int printk(const char* s, ...) {
     return r;
 }
 
+const int mouse_width {12}, mouse_height {19};
+const char mouse[mouse_height][mouse_width + 1] {
+  "@           ",
+  "@@          ",
+  "@.@         ",
+  "@..@        ",
+  "@...@       ",
+  "@....@      ",
+  "@.....@     ",
+  "@......@    ",
+  "@.......@   ",
+  "@........@  ",
+  "@.........@ ",
+  "@..........@",
+  "@......@@@@@",
+  "@...@..@    ",
+  "@..@ @..@   ",
+  "@.@  @..@   ",
+  "@@    @..@  ",
+  "      @..@  ",
+  "       @@   ",
+};
+
+
 extern "C" void kernel_main (const frame_buffer_config &conf) {
     char writer_buf[sizeof(pixel_writer)];
     pixel_writer *writer = conf.f == RGB ?
@@ -49,6 +73,12 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
     for (int i: range(1, 20))
         printk("long long long long long line : %d\n", i);
     printk("Wellcome to the boxnos world!!\n");
+
+    for (int my: range(mouse_height))
+        for (int mx: range(mouse_width))
+            if (mouse[my][mx] != ' ')
+                writer->write(200 + mx, 100 + my,
+                              mouse[my][mx] == '.' ? color{0xFF, 0xFF, 0xFF} : color{0x00, 0x00, 0x00});
 
     for (;;)
         __asm__("hlt");
