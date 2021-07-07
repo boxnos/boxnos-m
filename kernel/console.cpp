@@ -29,6 +29,6 @@ void console::put_string (const char *s) {
             if (col_ >= cols)
                 new_line();
             buf_[row_][col_] = *s;
-            write_ascii(writer_, 6 * col_++, 13 * row_, *s, {0x33, 0xFF, 0x44});
+            write_ascii(writer_, 6 * col_++, 13 * row_, *s, fg_);
         }
 }
