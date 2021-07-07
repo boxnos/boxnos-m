@@ -16,7 +16,7 @@ void operator delete([[maybe_unused]] void * o) noexcept {}
 int printk(const char* s, ...) {
     int r;
     va_list ap;
-    static char b[1024];
+    char b[1024];
 
     va_start(ap, s);
     r = vsprintf(b, s, ap);
