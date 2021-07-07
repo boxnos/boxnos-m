@@ -5,6 +5,15 @@ struct color {
     uint8_t r, g, b;
 };
 
+struct V2 {
+    int x, y;
+    V2 &operator += (const V2 &a) {
+        x += a.x;
+        y += a.y;
+        return *this;
+    }
+};
+
 class pixel_writer {
     private:
         const frame_buffer_config conf;

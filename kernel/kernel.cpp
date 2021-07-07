@@ -74,11 +74,17 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
         printk("long long long long long line : %d\n", i);
     printk("Wellcome to the boxnos world!!\n");
 
+    V2 a {1, 2}, b {3, 4};
+    printk("a(%d, %d) += b(%d, %d)\n", a.x, a.y, b.x, b.y);
+    a += b;
+    printk("a(%d, %d)\n", a.x, a.y);
+
     for (int my: range(mouse_height))
         for (int mx: range(mouse_width))
             if (mouse[my][mx] != ' ')
                 writer->write(200 + mx, 100 + my,
                               mouse[my][mx] == '.' ? color{0xFF, 0xFF, 0xFF} : color{0x00, 0x00, 0x00});
+
 
     for (;;)
         __asm__("hlt");
