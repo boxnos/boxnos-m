@@ -4,7 +4,7 @@
 #include <cstring>
 
 console::console (pixel_writer &writer, const color &fg, const color &bg) : writer_{writer}, fg_{fg}, bg_{bg} {
-    writer_.rect(0, 0, 6 * cols, 13 * rows, bg_);
+    writer_.fill_rect(0, 0, 6 * cols, 13 * rows, bg_);
 }
 
 void console::new_line() {
@@ -12,7 +12,7 @@ void console::new_line() {
     if (row_ < rows - 1) {
         ++row_;
     } else {
-        writer_.rect(0, 0, 6 * cols, 13 * rows, bg_);
+        writer_.fill_rect(0, 0, 6 * cols, 13 * rows, bg_);
         for (int r: range(rows - 1)) {
             memcpy(buf_[r], buf_[r + 1], cols);
             write_string(writer_, 0, 13 * r, buf_[r], fg_);

@@ -24,8 +24,8 @@ class pixel_writer {
         pixel_writer(const frame_buffer_config &c) : conf_ {c} {}
         virtual ~pixel_writer() = default;
         virtual void write(int, int, const color &) = 0;
-        void rect(int, int, int, int, const color &);
-        void rect(const V2 &, const V2 &, const color &);
+        void fill_rect(int, int, int, int, const color &);
+        void fill_rect(const V2 &, const V2 &, const color &);
     protected:
         uint8_t* at(int x, int y) {
             return &conf_.buf[4 * (conf_.d * y + x)];
