@@ -68,12 +68,18 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
         writer->draw_rect({ex, ey}, {ex, ey}, {uint8_t(ex % 256), uint8_t(ey % 256), 0});
     }
 
-    konsole = new(konsole_buf) console(*writer, {0xFF, 0xFF, 0xFF}, {0x33, 0x33, 0x33});
-
     char buf[1024];
     write_string(*writer, 200, 300, "Hello, boxnos-m World !?", {0xFF, 0xFF, 0xFF});
     sprintf(buf, "123 * 456 = %d", 123 * 456);
     write_string(*writer, 200, 313, buf, {0xFF, 0xFF, 0xFF});
+
+    // start menu
+    writer->fill_rect(0, conf.v - 30, conf.h, 30, {0x33, 0x33, 0x33});
+    writer->fill_rect(2, conf.v - 28, 80, 26, {0x44, 0x44, 0x44});
+    writer->draw_rect({2, int(conf.v - 28)}, {80, 26}, {0x99, 0x99, 0x99});
+    write_string(*writer, 10, conf.v - 21, "   START   ", {0xFF, 0xFF, 0xFF});
+
+    konsole = new(konsole_buf) console(*writer, {0xFF, 0xFF, 0xFF}, {0x33, 0x33, 0x33});
 
     for (int i: range(1, 20))
         printk("long long long long long line : %d\n", i);
