@@ -26,6 +26,7 @@ class pixel_writer {
         virtual void write(int, int, const color &) = 0;
         void fill_rect(int, int, int, int, const color &);
         void fill_rect(const V2 &, const V2 &, const color &);
+        void draw_rect(const V2 &, const V2 &, const color &);
     protected:
         uint8_t* at(int x, int y) {
             return &conf_.buf[4 * (conf_.d * y + x)];

@@ -63,6 +63,11 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
         writer->fill_rect({ex, ey}, {ex, ey}, {uint8_t(ex % 256), uint8_t(ey % 256), 0});
     }
 
+    for ([[maybe_unused]] int t: range(15)) {
+        int ex = rand() % conf.h / 2, ey = rand() % conf.v / 2;
+        writer->draw_rect({ex, ey}, {ex, ey}, {uint8_t(ex % 256), uint8_t(ey % 256), 0});
+    }
+
     konsole = new(konsole_buf) console(*writer, {0xFF, 0xFF, 0xFF}, {0x33, 0x33, 0x33});
 
     char buf[1024];
