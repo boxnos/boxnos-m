@@ -7,7 +7,7 @@ srcpp:=kernel.cpp graphics.cpp font.cpp console.cpp
 objs:=$(srcc:%.c=%.o) $(srcpp:%.cpp=%.o)
 deps:=$(srcc:%.c=%.d) $(srcpp:%.cpp=%.d)
 
-kernel.elf: $(objs) font/mplus.o
+kernel.elf: $(objs) asmfunc.o font/mplus.o
 	ld.lld $(LDFLAGS) --entry kernel_main -z norelro --image-base 0x100000 --static \
 	-z separate-code -o $@ $^
 	ctags -R
@@ -19,6 +19,9 @@ kernel.elf: $(objs) font/mplus.o
 
 %.o: %.c
 	clang -MMD -MP $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+%.o: %.asm
+	nasm -f elf64 -o $@ $<
 
 clean:
 	rm -f *.o *.elf tags *.d

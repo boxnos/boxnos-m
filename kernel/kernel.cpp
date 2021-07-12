@@ -5,27 +5,11 @@
 #include "graphics.hpp"
 #include "font.hpp"
 #include "console.hpp"
+#include "asmfunc.h"
 using namespace std;
-
-char konsole_buf[sizeof(console)];
-console *konsole;
 
 void* operator new([[maybe_unused]] size_t s, void *buf) { return buf; }
 void operator delete([[maybe_unused]] void * o) noexcept {}
-
-int printk(const char* s, ...) {
-    int r;
-    va_list ap;
-    char b[1024];
-
-    va_start(ap, s);
-    r = vsprintf(b, s, ap);
-    va_end(ap);
-
-    konsole->put_string(b);
-
-    return r;
-}
 
 const int mouse_width {12}, mouse_height {19};
 const char mouse[mouse_height][mouse_width + 1] {
@@ -50,12 +34,13 @@ const char mouse[mouse_height][mouse_width + 1] {
   "       @@   ",
 };
 
-
 extern "C" void kernel_main (const frame_buffer_config &conf) {
     char writer_buf[sizeof(pixel_writer)];
     pixel_writer *writer = conf.f == RGB ?
         (pixel_writer *) new(writer_buf) rgb_writer(conf) :
         (pixel_writer *) new(writer_buf) bgr_writer(conf);
+
+    konsole = new(konsole_buf) console(*writer, {0xFF, 0xFF, 0xFF}, {0x33, 0x33, 0x33});
 
     writer->fill_rect(0, 0, conf.h, conf.v, {0xFF, 0xFF, 0xFF});
     for ([[maybe_unused]] int t: range(15)) {
@@ -73,13 +58,6 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
     sprintf(buf, "123 * 456 = %d", 123 * 456);
     write_string(*writer, 200, 313, buf, {0xFF, 0xFF, 0xFF});
 
-    // start menu
-    writer->fill_rect(0, conf.v - 30, conf.h, 30, {0x33, 0x33, 0x33});
-    writer->fill_rect(2, conf.v - 28, 80, 26, {0x44, 0x44, 0x44});
-    writer->draw_rect({2, int(conf.v - 28)}, {80, 26}, {0x99, 0x99, 0x99});
-    write_string(*writer, 10, conf.v - 21, "   START   ", {0xFF, 0xFF, 0xFF});
-
-    konsole = new(konsole_buf) console(*writer, {0xFF, 0xFF, 0xFF}, {0x33, 0x33, 0x33});
 
     for (int i: range(1, 20))
         printk("long long long long long line : %d\n", i);
@@ -90,11 +68,22 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
     a += b;
     printk("a(%d, %d)\n", a.x, a.y);
 
+    // start menu
+    writer->fill_rect(0, conf.v - 30, conf.h, 30, {0x33, 0x33, 0x33});
+    writer->fill_rect(2, conf.v - 28, 80, 26, {0x44, 0x44, 0x44});
+    writer->draw_rect({2, int(conf.v - 28)}, {80, 26}, {0x99, 0x99, 0x99});
+    write_string(*writer, 10, conf.v - 21, "   START   ", {0xFF, 0xFF, 0xFF});
+
+    printk("%u\n", io_in32(0x0cf8));
+    io_out32(0x0cf8, 0x80012004);
+    printk("%u\n", io_in32(0x0cf8));
+
     for (int my: range(mouse_height))
         for (int mx: range(mouse_width))
             if (mouse[my][mx] != ' ')
-                writer->write(200 + mx, 100 + my,
+                writer->write(300 + mx, 100 + my,
                               mouse[my][mx] == '.' ? color{0xFF, 0xFF, 0xFF} : color{0x00, 0x00, 0x00});
+
 
     for (;;)
         __asm__("hlt");

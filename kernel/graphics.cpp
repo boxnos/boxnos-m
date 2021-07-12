@@ -1,5 +1,6 @@
 #include "graphics.hpp"
 #include "range.hpp"
+#include "console.hpp"
 #include <algorithm>
 using namespace std;
 

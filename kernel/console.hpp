@@ -4,7 +4,7 @@
 
 class console {
     public:
-        static const int rows {10}, cols {20};
+        static const int rows {20}, cols {40};
 
         console(pixel_writer &, const color &, const color &);
         void put_string(const char *);
@@ -16,3 +16,8 @@ class console {
 
         void new_line();
 };
+
+extern char konsole_buf[];
+extern console *konsole;
+
+int printk(const char *s, ...);

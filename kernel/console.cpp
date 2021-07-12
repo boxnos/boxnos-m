@@ -1,7 +1,11 @@
+#include <cstring>
+#include <stdio.h>
 #include "console.hpp"
 #include "font.hpp"
 #include "range.hpp"
-#include <cstring>
+
+char konsole_buf[sizeof(console)];
+console *konsole;
 
 console::console (pixel_writer &writer, const color &fg, const color &bg) : writer_{writer}, fg_{fg}, bg_{bg} {
     writer_.fill_rect(0, 0, 6 * cols, 13 * rows, bg_);
@@ -31,4 +35,19 @@ void console::put_string (const char *s) {
             buf_[row_][col_] = *s;
             write_ascii(writer_, 6 * col_++, 13 * row_, *s, fg_);
         }
+}
+
+
+int printk(const char *s, ...) {
+    int r;
+    va_list ap;
+    char b[1024];
+
+    va_start(ap, s);
+    r = vsprintf(b, s, ap);
+    va_end(ap);
+
+    konsole->put_string(b);
+
+    return r;
 }
