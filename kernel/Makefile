@@ -20,8 +20,8 @@ kernel.elf: $(objs) asmfunc.o font/mplus.o
 %.o: %.c
 	clang -MMD -MP $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-%.o: %.asm
-	nasm -f elf64 -o $@ $<
+%.o: %.s
+	as -o $@ $<
 
 clean:
 	rm -f *.o *.elf tags *.d

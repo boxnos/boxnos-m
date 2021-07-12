@@ -74,9 +74,10 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
     writer->draw_rect({2, int(conf.v - 28)}, {80, 26}, {0x99, 0x99, 0x99});
     write_string(*writer, 10, conf.v - 21, "   START   ", {0xFF, 0xFF, 0xFF});
 
-    printk("%u\n", io_in32(0x0cf8));
+    printk("io_in32(0x0cf8) : %u\n", io_in32(0x0cf8));
+    printk("io_out32(0x0cf8, 0x80012004)\n", io_in32(0x0cf8));
     io_out32(0x0cf8, 0x80012004);
-    printk("%u\n", io_in32(0x0cf8));
+    printk("io_in32(0x0cf8) : %u\n", io_in32(0x0cf8));
 
     for (int my: range(mouse_height))
         for (int mx: range(mouse_width))
