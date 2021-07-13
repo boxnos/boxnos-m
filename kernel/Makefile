@@ -3,7 +3,7 @@ CFLAGS+=$(flags)
 CXXFLAGS+=$(flags) -fno-exceptions -fno-rtti -std=c++17
 
 srcc:=newlib.c
-srcpp:=kernel.cpp graphics.cpp font.cpp console.cpp
+srcpp:=kernel.cpp graphics.cpp font.cpp console.cpp pci.cpp
 objs:=$(srcc:%.c=%.o) $(srcpp:%.cpp=%.o)
 deps:=$(srcc:%.c=%.d) $(srcpp:%.cpp=%.d)
 
