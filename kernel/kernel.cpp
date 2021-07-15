@@ -5,7 +5,6 @@
 #include "graphics.hpp"
 #include "font.hpp"
 #include "console.hpp"
-#include "asmfunc.h"
 #include "pci.hpp"
 using namespace std;
 
@@ -75,11 +74,7 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
     writer->draw_rect({2, int(conf.v - 28)}, {80, 26}, {0x99, 0x99, 0x99});
     write_string(*writer, 10, conf.v - 21, "   START   ", {0xFF, 0xFF, 0xFF});
 
-    printk("io_in32(0x0cf8) : %u\n", io_in32(0x0cf8));
-    printk("make_address(1, 4, 0, 0x04) : %x\n", make_address(1, 4, 0, 0x04));
-    printk("io_out32(0x0cf8, make_address(1, 4, 0, 0x04)\n");
-    io_out32(0x0cf8, make_address(1, 4, 0, 0x04));
-    printk("io_in32(0x0cf8) : %x\n", io_in32(0x0cf8));
+    scan_all_bus();
 
     for (int my: range(mouse_height))
         for (int mx: range(mouse_width))
