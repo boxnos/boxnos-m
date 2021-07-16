@@ -32,16 +32,28 @@ bool is_single_function_device(uint8_t header_type) {
     return (header_type & 0x80u) == 0;
 }
 
+void scan_device(uint8_t bus, uint8_t device) {
+    if (is_single_function_device(read_header_type(bus, device, 0)))
+        printk("found PCI %x %x %x : single\n", bus, device, 0);
+    for (uint8_t f {1}; f < 8 ;++f)
+        if (read_vender_id(bus, device, f) != 0xffffu)
+            printk("found PCI %x %x %x : not single\n", bus, device, f);
+}
+
+void scan_bus(uint8_t bus) {
+    for (uint8_t d {}; d < 32; ++d) {
+        if (read_vender_id(bus, d, 0) != 0xffffu)
+            scan_device(bus, d);
+    }
+}
+
 void scan_all_bus() {
-    takl("hello, takl");
+    takl("PCI : Bus / Dev / Func");
     if (is_single_function_device(read_header_type(0, 0, 0)))
-        takl("(0 0 0) is single-device");
-    for (uint8_t f {}; f < 8; ++f) {
-        printk("%x\n", read_vender_id(0, 0, f));
-        if (read_vender_id(0, 0, f) == 0xffffu) {
-    //        printk("skiped\n");
-        } else {
-        }
+        scan_bus(0);
+    for (uint8_t f {1}; f < 8; ++f) {
+        if (read_vender_id(0, 0, f) != 0xffffu)
+            scan_bus(f);
     }
     printk("io_in32(0x0cf8) : %u\n", io_in32(0x0cf8));
     printk("make_address(1, 4, 0, 0x04) : %x\n", make_address(1, 4, 0, 0x04));
