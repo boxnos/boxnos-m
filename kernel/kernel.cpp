@@ -8,7 +8,7 @@
 #include "pci.hpp"
 using namespace std;
 
-void* operator new([[maybe_unused]] size_t s, void *buf) { return buf; }
+//void* operator new([[maybe_unused]] size_t s, void *buf) { return buf; }
 void operator delete([[maybe_unused]] void * o) noexcept {}
 
 const int mouse_width {12}, mouse_height {19};
@@ -40,7 +40,6 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
         (pixel_writer *) new(writer_buf) rgb_writer(conf) :
         (pixel_writer *) new(writer_buf) bgr_writer(conf);
 
-    konsole = new(konsole_buf) console(*writer, {0xFF, 0xFF, 0xFF}, {0x33, 0x33, 0x33});
 
     writer->fill_rect(0, 0, conf.h, conf.v, {0xFF, 0xFF, 0xFF});
     for ([[maybe_unused]] int t: range(15)) {
@@ -53,15 +52,17 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
         writer->draw_rect({ex, ey}, {ex, ey}, {uint8_t(ex % 256), uint8_t(ey % 256), 0});
     }
 
-    char buf[1024];
-    write_string(*writer, 200, 300, "Hello, boxnos-m World !?", {0xFF, 0xFF, 0xFF});
-    sprintf(buf, "123 * 456 = %d", 123 * 456);
-    write_string(*writer, 200, 313, buf, {0xFF, 0xFF, 0xFF});
+    konsole = new(konsole_buf) console(*writer, {0xFF, 0xFF, 0xFF}, {0x33, 0x33, 0x33});
+
+    //char buf[1024];
+    //write_string(*writer, 200, 300, "Hello, boxnos-m World !?", {0xFF, 0xFF, 0xFF});
+    //sprintf(buf, "123 * 456 = %d", 123 * 456);
+    //write_string(*writer, 200, 313, buf, {0xFF, 0xFF, 0xFF});
 
 
-    for (int i: range(1, 20))
+    for (int i: range(1, 10))
         printk("long long long long long line : %d\n", i);
-    printk("Wellcome to the boxnos world!!\n");
+    //printk("Wellcome to the boxnos world!!\n");
 
     V2 a {1, 2}, b {3, 4};
     printk("a(%d, %d) += b(%d, %d)\n", a.x, a.y, b.x, b.y);
@@ -74,7 +75,14 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
     writer->draw_rect({2, int(conf.v - 28)}, {80, 26}, {0x99, 0x99, 0x99});
     write_string(*writer, 10, conf.v - 21, "   START   ", {0xFF, 0xFF, 0xFF});
 
-    scan_all_bus();
+    pci::scan_all_bus();
+
+    for (int i: range(pci::num_device)) {
+        auto &dev = pci::devices[i];
+        printk("%d %d %d %04x %08x\n", dev.bus, dev.device, dev.function,
+               pci::read_vender_id(dev.bus, dev.device, dev.function),
+               pci::read_class_code(dev.bus, dev.device, dev.function));
+    }
 
     for (int my: range(mouse_height))
         for (int mx: range(mouse_width))
