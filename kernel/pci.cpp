@@ -2,11 +2,6 @@
 #include "pci.hpp"
 #include "asmfunc.h"
 
-#define TAK(t, s) t tak(t v) {printk(s, v); return v;}
-TAK(const char *, "%s") TAK(uint8_t, "0x%x")
-template <typename T> T takl(T v) {tak(v); printk("\n"); return v;}
-template <typename T> T taks(T v) {tak(v); printk(" "); return v;}
-
 namespace pci {
     uint32_t make_address(uint8_t bus, uint8_t device, uint8_t function, uint8_t reg_addr) {
         return (1 << 31 | bus << 16 | device << 11 | function << 8 | (reg_addr & 0xfcu));

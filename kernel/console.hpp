@@ -4,7 +4,7 @@
 
 class console {
     public:
-        static const int rows {20}, cols {40};
+        static const int rows {30}, cols {50};
 
         console(pixel_writer &, const color &, const color &);
         void put_string(const char *);
@@ -21,3 +21,8 @@ extern char konsole_buf[];
 extern console *konsole;
 
 int printk(const char *s, ...);
+
+#define TAK(t, s) inline t tak(t v) {printk(s, v); return v;}
+TAK(const char *, "%s") TAK(uint8_t, "0x%x")
+template <typename T> inline T takl(T v) {tak(v); printk("\n"); return v;}
+template <typename T> inline T taks(T v) {tak(v); printk(" "); return v;}

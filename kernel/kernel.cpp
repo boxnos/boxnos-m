@@ -60,14 +60,14 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
     //write_string(*writer, 200, 313, buf, {0xFF, 0xFF, 0xFF});
 
 
-    for (int i: range(1, 10))
-        printk("long long long long long line : %d\n", i);
-    //printk("Wellcome to the boxnos world!!\n");
+    printk("Wellcome to the boxnos world!!\n");
+    //for (int i: range(1, 10))
+    //    printk("long long long long long line : %d\n", i);
 
-    V2 a {1, 2}, b {3, 4};
-    printk("a(%d, %d) += b(%d, %d)\n", a.x, a.y, b.x, b.y);
-    a += b;
-    printk("a(%d, %d)\n", a.x, a.y);
+    //V2 a {1, 2}, b {3, 4};
+    //printk("a(%d, %d) += b(%d, %d)\n", a.x, a.y, b.x, b.y);
+    //a += b;
+    //printk("a(%d, %d)\n", a.x, a.y);
 
     // start menu
     writer->fill_rect(0, conf.v - 30, conf.h, 30, {0x33, 0x33, 0x33});
@@ -77,11 +77,13 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
 
     pci::scan_all_bus();
 
+    takl("scan all bus");
+
     for (int i: range(pci::num_device)) {
         auto &dev = pci::devices[i];
-        printk("%d %d %d %04x %08x\n", dev.bus, dev.device, dev.function,
+        printk("%d %d %d vend : %04x class : %08x, head %02x\n", dev.bus, dev.device, dev.function,
                pci::read_vender_id(dev.bus, dev.device, dev.function),
-               pci::read_class_code(dev.bus, dev.device, dev.function));
+               pci::read_class_code(dev.bus, dev.device, dev.function), dev.header_type);
     }
 
     for (int my: range(mouse_height))
