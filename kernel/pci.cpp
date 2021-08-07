@@ -62,7 +62,7 @@ namespace pci {
         }
     }
 
-    void scan_all_bus() {
+    error scan_all_bus() {
         num_device = 0;
         if (is_single_function_device(read_header_type(0, 0, 0)))
             scan_bus(0);
@@ -75,5 +75,6 @@ namespace pci {
         printk("io_out32(0x0cf8, make_address(1, 4, 0, 0x04)\n");
         io_out32(0x0cf8, make_address(1, 4, 0, 0x04));
         printk("io_in32(0x0cfc) : %x\n", io_in32(0x0cfc));
+        return error::success;
     }
 }

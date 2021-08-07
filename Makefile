@@ -5,7 +5,7 @@ loader=edk2/Build/loaderX64/DEBUG_CLANG38/X64/loader.efi
 kernel=kernel/kernel.elf
 lib=libcxx/lib
 # lib=x86_64-elf
-export CPPFLAGS=-I$(PWD)/$(lib)/include/c++/v1 -I$(PWD)/$(lib)/include -I$(PWD)/$(lib)/freetype -nostdlibinc -D__ELF__ -D_LDBL_EQ_DBL -D_GNU_SOURCE
+export CPPFLAGS=-I$(PWD)/$(lib)/include/c++/v1 -I$(PWD)/$(lib)/include -I$(PWD)/$(lib)/freetype -nostdlibinc -D__ELF__ -D_LDBL_EQ_DBL -D_GNU_SOURCE -D_POSIX_TIMERS -DEFIAPI='__attribute__((ms_abi))'
 export LDFLAGS=-L$(PWD)/$(lib)/lib -lc++ -lm -lc
 
 run-qemu: $(ovmf)/OVMF_CODE.fd $(ovmf)/OVMF_VARS.fd subs disk.img

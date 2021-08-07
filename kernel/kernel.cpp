@@ -75,7 +75,7 @@ extern "C" void kernel_main (const frame_buffer_config &conf) {
     writer->draw_rect({2, int(conf.v - 28)}, {80, 26}, {0x99, 0x99, 0x99});
     write_string(*writer, 10, conf.v - 21, "   START   ", {0xFF, 0xFF, 0xFF});
 
-    pci::scan_all_bus();
+    printk("status : %s\n", pci::scan_all_bus().name());
 
     takl("scan all bus");
 
